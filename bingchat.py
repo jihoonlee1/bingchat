@@ -87,14 +87,15 @@ def chat(client_msg):
 		websocket.send(_chathub_ws_msg(client_msg))
 		while True:
 			data = json.loads(websocket.recv().split("\x1e")[0])
-			if data["type"] == 2:
-				for msg in data["item"]["messages"]:
-					if msg["author"] == "user":
-						continue
-					if "messageType" in msg:
-						continue
-					else:
-						return _clean_msg(msg["text"])
+			if data["type"] != 2:
+				continue
+			for msg in data["item"]["messages"]:
+				if msg["author"] == "user":
+					continue
+				if "messageType" in msg:
+					continue
+				else:
+					return _clean_msg(msg["text"])
 				break
 
 

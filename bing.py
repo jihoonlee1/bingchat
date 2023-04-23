@@ -78,7 +78,7 @@ def _clean_msg(msg):
 	return msg
 
 
-def chat(client_msg):
+def ask(client_msg):
 	with connect("wss://sydney.bing.com/sydney/ChatHub") as websocket:
 		websocket.send(_initial_handshake_msg())
 		websocket.recv()
@@ -100,5 +100,5 @@ def chat(client_msg):
 if __name__ == "__main__":
 	question = '''
 	Write 5 made up news articles about Apple on different subject. Make sure each article is more than 50 words. Separate each article with "Article: ".'''
-	answer = chat(question)
+	answer = ask(question)
 	print(answer)

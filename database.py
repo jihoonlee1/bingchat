@@ -8,13 +8,34 @@ statements = [
 CREATE TABLE IF NOT EXISTS companies(
 	id           INTEGER NOT NULL PRIMARY KEY,
 	name         TEXT    NOT NULL,
-	description  TEXT            ,
+	description  TEXT,
 	industry     TEXT    NOT NULL,
 	country      TEXT    NOT NULL,
 	revenue      INTEGER NOT NULL,
 	profits      INTEGER NOT NULL,
 	assets       INTEGER NOT NULL,
 	market_value INTEGER NOT NULL
+);
+""",
+"""
+CREATE TABLE IF NOT EXISTS incidents(
+	id         INTEGER NOT NULL PRIMARY KEY,
+	company_id INTEGER NOT NULL REFERENCES companies(id),
+	content    TEXT    NOT NULL
+);
+""",
+"""
+CREATE TABLE IF NOT EXISTS root_incidents(
+	id         INTEGER NOT NULL PRIMARY KEY REFERENCES incidents(id),
+	company_id INTEGER NOT NULL             REFERENCES companies(id)
+);
+""",
+"""
+CREATE TABLE IF NOT EXISTS root_incident_children(
+	root_incident_id   INTEGER NOT NULL REFERENCES root_incidents(id),
+	child_incident_id  INTEGER NOT NULL REFERENCES incidents(id),
+	soft_pos_hard_neg  INTEGER NOT NULL,
+	PRIMARY KEY(root_incident_id, child_incident_id)
 );
 """
 ]

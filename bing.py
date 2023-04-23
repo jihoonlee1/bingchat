@@ -1,5 +1,4 @@
 from websockets.sync.client import connect
-import emoji
 import ipaddress
 import json
 import random
@@ -74,7 +73,6 @@ def _chathub_ws_msg(msg, cdxtone=_creative()):
 
 
 def _clean_msg(msg):
-	msg = re.sub(emoji.get_emoji_regexp(), "", msg)
 	msg = re.sub(r"\*\*", "", msg)
 	msg = re.sub(r"\[\^([0-9])+\^\] *", "", msg).strip()
 	return msg
@@ -97,3 +95,9 @@ def chat(client_msg):
 				else:
 					return _clean_msg(msg["text"])
 				break
+
+
+if __name__ == "__main__":
+	question = "What is the weather like in London?"
+	answer = chat(question)
+	print(answer)

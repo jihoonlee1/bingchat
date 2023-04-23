@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS root_incidents(
 CREATE TABLE IF NOT EXISTS root_incident_children(
 	root_incident_id   INTEGER NOT NULL REFERENCES root_incidents(id),
 	child_incident_id  INTEGER NOT NULL REFERENCES incidents(id),
-	soft_pos_hard_neg  INTEGER NOT NULL,
+	is_follow_up       INTEGER NOT NULL,
 	PRIMARY KEY(root_incident_id, child_incident_id)
 );
 """

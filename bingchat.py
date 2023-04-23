@@ -97,13 +97,3 @@ def chat(client_msg):
 				else:
 					return _clean_msg(msg["text"])
 				break
-
-
-def main():
-	msg = "Hi there bing!"
-	response = chat(msg)
-	print(response)
-
-
-if __name__ == "__main__":
-	main()

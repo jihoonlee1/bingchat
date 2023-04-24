@@ -8,28 +8,22 @@ import uuid
 import secrets
 
 
-def _cookie(cookie):
-	with open(cookie, "r") as f:
-		temp = json.load(f)
-		cookie = []
-		for key, val in temp.items():
-			line = f"{key}={val}"
-			cookie.append(line)
-		cookie = "; ".join(cookie)
-		return cookie
+def _cookie(cookie_fname):
+	with open(cookie_fname, "r") as f:
+		return f.read()
 
 
-def _headers(cookie):
+def _headers(cookie_fname):
 	with open("headers.json", "r") as f:
 		headers = json.load(f)
-		headers["cookie"] = _cookie(cookie)
+		headers["cookie"] = _cookie(cookie_fname)
 		headers["x-ms-client-request-id"] = str(uuid.uuid4())
 		headers["x-forwarded-for"] = ipaddress.IPv6Address._string_from_ip_int(random.randint(0, ipaddress.IPv6Address._ALL_ONES))
 		return headers
 
 
-def _create_conversation(cookie):
-	response = requests.get("https://www.bing.com/turing/conversation/create", headers=_headers(cookie))
+def _create_conversation(cookie_fname):
+	response = requests.get("https://www.bing.com/turing/conversation/create", headers=_headers(cookie_fname))
 	data = response.json()
 	return data["conversationId"], data["clientId"], data["conversationSignature"]
 
@@ -58,8 +52,8 @@ def _precise():
 	return ["h3precise", "clgalileo"]
 
 
-def _chathub_ws_msg(msg, cookie, cdxtone=_creative()):
-	conv_id, client_id, conv_sig = _create_conversation(cookie)
+def _chathub_ws_msg(msg, cookie_fname, cdxtone=_creative()):
+	conv_id, client_id, conv_sig = _create_conversation(cookie_fname)
 	with open("websocket.json", "r") as f:
 		obj = json.load(f)
 		obj["arguments"][0]["traceId"] = secrets.token_hex(16)
@@ -78,11 +72,11 @@ def _clean_msg(msg):
 	return msg
 
 
-def ask(client_msg, cookie):
+def ask(client_msg, cookie_fname):
 	with connect("wss://sydney.bing.com/sydney/ChatHub") as websocket:
 		websocket.send(_initial_handshake_msg())
 		websocket.recv()
-		websocket.send(_chathub_ws_msg(client_msg, cookie))
+		websocket.send(_chathub_ws_msg(client_msg, cookie_fname))
 		while True:
 			data = json.loads(websocket.recv().split("\x1e")[0])
 			if data["type"] != 2:
@@ -99,5 +93,5 @@ def ask(client_msg, cookie):
 
 if __name__ == "__main__":
 	question = "Hello bing!"
-	answer = ask(question, "cookie1.json")
+	answer = ask(question, "cookie9.txt")
 	print(answer)

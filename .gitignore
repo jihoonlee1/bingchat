@@ -2,3 +2,4 @@ cookie*.json
 headers.json
 websocket.json
 companies.json
+cookie_str.txt

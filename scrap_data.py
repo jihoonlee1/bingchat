@@ -2,11 +2,11 @@ import bing
 import database
 import queue
 import threading
+import utils
 import re
 
-
 WRITE_QUEUE = queue.Queue()
-NUM_COOKIES = 12
+NUM_COOKIES = utils.num_cookies()
 NUM_COMPANIES_PER_COOKIE = 5
 MAX_WORKERS = NUM_COMPANIES_PER_COOKIE * NUM_COOKIES
 
@@ -72,9 +72,9 @@ def _hard_neg_question2(company_name, root_incident):
 	'''
 
 
-def _scrap(company_id, company_name, cookie):
+def _scrap(company_id, company_name, cookie_fname):
 	try:
-		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie))
+		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie_fname))
 	except:
 		WRITE_QUEUE.put(None)
 		return
@@ -149,7 +149,7 @@ def main():
 		for i in range(NUM_COOKIES):
 			companies = all_companies[leftend:rightend]
 			for company_id, company_name in companies:
-				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"cookie{i}.json"))
+				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"cookie{i}.txt"))
 				t.start()
 				threads.append(t)
 			leftend = rightend

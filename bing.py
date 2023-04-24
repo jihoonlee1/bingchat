@@ -10,7 +10,7 @@ import secrets
 
 def _cookie(cookie_fname):
 	with open(cookie_fname, "r") as f:
-		return f.read()
+		return f.read().strip()
 
 
 def _headers(cookie_fname):

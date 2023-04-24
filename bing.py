@@ -8,8 +8,8 @@ import uuid
 import secrets
 
 
-def _cookie():
-	with open("cookie.json", "r") as f:
+def _cookie(cookie):
+	with open(cookie, "r") as f:
 		temp = json.load(f)
 		cookie = []
 		for key, val in temp.items():
@@ -19,17 +19,17 @@ def _cookie():
 		return cookie
 
 
-def _headers():
+def _headers(cookie):
 	with open("headers.json", "r") as f:
 		headers = json.load(f)
-		headers["cookie"] = _cookie()
+		headers["cookie"] = _cookie(cookie)
 		headers["x-ms-client-request-id"] = str(uuid.uuid4())
 		headers["x-forwarded-for"] = ipaddress.IPv6Address._string_from_ip_int(random.randint(0, ipaddress.IPv6Address._ALL_ONES))
 		return headers
 
 
-def _create_conversation():
-	response = requests.get("https://www.bing.com/turing/conversation/create", headers=_headers())
+def _create_conversation(cookie):
+	response = requests.get("https://www.bing.com/turing/conversation/create", headers=_headers(cookie))
 	data = response.json()
 	return data["conversationId"], data["clientId"], data["conversationSignature"]
 
@@ -58,8 +58,8 @@ def _precise():
 	return ["h3precise", "clgalileo"]
 
 
-def _chathub_ws_msg(msg, cdxtone=_creative()):
-	conv_id, client_id, conv_sig = _create_conversation()
+def _chathub_ws_msg(msg, cookie, cdxtone=_creative()):
+	conv_id, client_id, conv_sig = _create_conversation(cookie)
 	with open("websocket.json", "r") as f:
 		obj = json.load(f)
 		obj["arguments"][0]["traceId"] = secrets.token_hex(16)
@@ -78,11 +78,11 @@ def _clean_msg(msg):
 	return msg
 
 
-def ask(client_msg):
+def ask(client_msg, cookie):
 	with connect("wss://sydney.bing.com/sydney/ChatHub") as websocket:
 		websocket.send(_initial_handshake_msg())
 		websocket.recv()
-		websocket.send(_chathub_ws_msg(client_msg))
+		websocket.send(_chathub_ws_msg(client_msg, cookie))
 		while True:
 			data = json.loads(websocket.recv().split("\x1e")[0])
 			if data["type"] != 2:
@@ -98,7 +98,6 @@ def ask(client_msg):
 
 
 if __name__ == "__main__":
-	question = '''
-	Write 5 made up news articles about Apple on different subject. Make sure each article is more than 50 words. Separate each article with "Article: ".'''
-	answer = ask(question)
+	question = "Hello bing!"
+	answer = ask(question, "cookie1.json")
 	print(answer)

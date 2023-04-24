@@ -1,4 +1,4 @@
-cookie.json
+cookie*.json
 headers.json
 websocket.json
 companies.json

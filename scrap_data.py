@@ -76,7 +76,7 @@ def _hard_neg_question2(company_name, root_incident):
 
 
 def _scrap(company_id, company_name, cookie_fname):
-	randint = random.randint(3, 10)
+	randint = random.randint(0, 20)
 	time.sleep(randint)
 	try:
 		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie_fname))

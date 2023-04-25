@@ -80,7 +80,7 @@ def _scrap(company_id, company_name, cookie_fname):
 	time.sleep(randint)
 	try:
 		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie_fname))
-		print(f"root: {root_incidents}")
+		print(f"root: {len(root_incidents)}")
 	except:
 		WRITE_QUEUE.put(None)
 		return
@@ -112,7 +112,8 @@ def _scrap(company_id, company_name, cookie_fname):
 
 			WRITE_QUEUE.put(data)
 		except:
-			continue
+			WRITE_QUEUE.put(None)
+			return
 	WRITE_QUEUE.put(None)
 
 

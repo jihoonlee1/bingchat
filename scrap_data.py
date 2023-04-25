@@ -4,6 +4,9 @@ import queue
 import threading
 import utils
 import re
+import random
+import time
+
 
 WRITE_QUEUE = queue.Queue()
 NUM_COOKIES = utils.num_cookies()
@@ -73,8 +76,11 @@ def _hard_neg_question2(company_name, root_incident):
 
 
 def _scrap(company_id, company_name, cookie_fname):
+	randint = random.randint(3, 10)
+	time.sleep(randint)
 	try:
 		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie_fname))
+		print(f"root: {root_incidents}")
 	except:
 		WRITE_QUEUE.put(None)
 		return
@@ -83,12 +89,16 @@ def _scrap(company_id, company_name, cookie_fname):
 			data = []
 			data.append((company_id, company_name))
 			data.append(root_incident)
-			soft_pos = _separate(bing.ask(_soft_pos_question(company_name, root_incident), cookie))
-			soft_neg = _separate(bing.ask(_soft_neg_question(company_name, root_incident), cookie))
-			hard_neg0 = _separate(bing.ask(_hard_neg_question0(company_name, root_incident), cookie))
-			hard_neg1 = _separate(bing.ask(_hard_neg_question1(company_name, root_incident), cookie))
-			hard_neg2 = _separate(bing.ask(_hard_neg_question2(company_name, root_incident), cookie))
-
+			soft_pos = _separate(bing.ask(_soft_pos_question(company_name, root_incident), cookie_fname))
+			soft_neg = _separate(bing.ask(_soft_neg_question(company_name, root_incident), cookie_fname))
+			hard_neg0 = _separate(bing.ask(_hard_neg_question0(company_name, root_incident), cookie_fname))
+			hard_neg1 = _separate(bing.ask(_hard_neg_question1(company_name, root_incident), cookie_fname))
+			hard_neg2 = _separate(bing.ask(_hard_neg_question2(company_name, root_incident), cookie_fname))
+			print(f"soft_pos: {len(soft_pos)}")
+			print(f"soft_neg: {len(soft_neg)}")
+			print(f"hard_neg0: {len(hard_neg0)}")
+			print(f"hard_neg1: {len(hard_neg1)}")
+			print(f"hard_neg2: {len(hard_neg2)}")
 			for item in soft_pos:
 				data.append((item, 1))
 			for item in soft_neg:
@@ -151,11 +161,11 @@ def main():
 			for company_id, company_name in companies:
 				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"cookie{i}.txt"))
 				t.start()
-				threads.append(t)
+				scrap_threads.append(t)
 			leftend = rightend
 			rightend = rightend + NUM_COMPANIES_PER_COOKIE
 
-		for t in threads:
+		for t in scrap_threads:
 			t.join()
 
 		write_db_thread.join()

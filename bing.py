@@ -93,5 +93,5 @@ def ask(client_msg, cookie_fname):
 
 if __name__ == "__main__":
 	question = "Hello bing!"
-	answer = ask(question, "cookie9.txt")
+	answer = ask(question, "cookie0.txt")
 	print(answer)

@@ -14,7 +14,7 @@ def _cookie(cookie_fname):
 
 
 def _headers(cookie_fname):
-	with open("headers.json", "r") as f:
+	with open("/Users/jihoon/code/bingchat/headers.json", "r") as f:
 		headers = json.load(f)
 		headers["cookie"] = _cookie(cookie_fname)
 		headers["x-ms-client-request-id"] = str(uuid.uuid4())
@@ -54,7 +54,7 @@ def _precise():
 
 def _chathub_ws_msg(msg, cookie_fname, cdxtone=_creative()):
 	conv_id, client_id, conv_sig = _create_conversation(cookie_fname)
-	with open("websocket.json", "r") as f:
+	with open("/Users/jihoon/code/bingchat/websocket.json", "r") as f:
 		obj = json.load(f)
 		obj["arguments"][0]["traceId"] = secrets.token_hex(16)
 		obj["arguments"][0]["conversationSignature"] = conv_sig
@@ -93,5 +93,5 @@ def ask(client_msg, cookie_fname):
 
 if __name__ == "__main__":
 	question = "Hello bing!"
-	answer = ask(question, "cookie0.txt")
+	answer = ask(question, "/Users/jihoon/code/bingchat/cookie0.txt")
 	print(answer)

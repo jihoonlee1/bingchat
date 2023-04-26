@@ -82,6 +82,7 @@ def _scrap(company_id, company_name, cookie_fname):
 		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie_fname))
 		print(f"root: {len(root_incidents)}")
 	except:
+		print(f"{cookie_fname} stopped at root")
 		WRITE_QUEUE.put(None)
 		return
 	for root_incident in root_incidents:
@@ -112,8 +113,10 @@ def _scrap(company_id, company_name, cookie_fname):
 
 			WRITE_QUEUE.put(data)
 		except:
+			print(f"{cookie_fname} stopped at children")
 			WRITE_QUEUE.put(None)
 			return
+	print(f"{cookie_fname} finished everything")
 	WRITE_QUEUE.put(None)
 
 
@@ -160,7 +163,7 @@ def main():
 		for i in range(NUM_COOKIES):
 			companies = all_companies[leftend:rightend]
 			for company_id, company_name in companies:
-				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"cookie{i}.txt"))
+				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"/Users/jihoon/code/bingchat/cookie{i}.txt"))
 				t.start()
 				scrap_threads.append(t)
 			leftend = rightend

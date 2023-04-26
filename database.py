@@ -47,7 +47,7 @@ def connect(database="database.sqlite", mode="rw"):
 
 
 def _add_companies(con, cur):
-	with open("companies.json", "r") as f:
+	with open("/Users/jihoon/code/bingchat/companies.json", "r") as f:
 		companies = json.load(f)
 		for c in companies:
 			try:

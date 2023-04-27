@@ -92,8 +92,9 @@ def ask(client_msg, cookie_fname):
 
 
 if __name__ == "__main__":
-	question = "Write 5 made up stories about Shell on different topic."
-	# answer = ask(question, "/Users/jihoon/code/bingchat/cookie27.txt")
-	question = f"Write 5 possible scenarios that could happen after {root_incident}."
-	answer = ask(question, "cookie27.txt")
+	# question = "Write 5 made-up news articles about Berkshire Hathaway."
+	root_incident = '''Berkshire Hathaway launches its own streaming service
+Berkshire Hathaway, the diversified holding company owned by Warren Buffett, has announced the launch of its own streaming service, called BH TV. The service will offer exclusive content from Berkshire Hathaway's subsidiaries and partners, such as Geico, Dairy Queen, Coca-Cola, Apple, and Amazon. The service will also feature original shows and documentaries about Buffett's life and investment philosophy, as well as interviews with celebrities and business leaders. BH TV will be available for $9.99 per month or $99 per year.'''
+	question = f'Write 5 made up news articles that are direct follow-up to {root_incident}. Make sure each article is about Berkshire Hathaway.'
+	answer = ask(question, "cookie29.txt")
 	print(answer)

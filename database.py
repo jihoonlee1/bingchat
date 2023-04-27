@@ -18,25 +18,25 @@ CREATE TABLE IF NOT EXISTS companies(
 );
 """,
 """
-CREATE TABLE IF NOT EXISTS scenarios(
+CREATE TABLE IF NOT EXISTS events(
 	id         INTEGER NOT NULL PRIMARY KEY,
 	company_id INTEGER NOT NULL REFERENCES companies(id),
 	content    TEXT    NOT NULL
 );
 """,
 """
-CREATE TABLE IF NOT EXISTS root_scenarios(
-	id         INTEGER NOT NULL PRIMARY KEY REFERENCES scenarios(id),
+CREATE TABLE IF NOT EXISTS root_events(
+	id         INTEGER NOT NULL PRIMARY KEY REFERENCES events(id),
 	company_id INTEGER NOT NULL             REFERENCES companies(id)
 );
 """,
 """
-CREATE TABLE IF NOT EXISTS root_scenario_children(
-	root_scenario_id   INTEGER NOT NULL REFERENCES root_scenarios(id),
-	child_scenario_id  INTEGER NOT NULL REFERENCES scenarios(id),
+CREATE TABLE IF NOT EXISTS root_event_children(
+	root_event_id   INTEGER NOT NULL REFERENCES root_events(id),
+	child_event_id  INTEGER NOT NULL REFERENCES events(id),
 	company_id         INTEGER NOT NULL REFERENCES companies(id),
 	is_follow_up       INTEGER NOT NULL,
-	PRIMARY KEY(root_scenario_id, child_scenario_id)
+	PRIMARY KEY(root_event_id, child_event_id)
 );
 """
 ]

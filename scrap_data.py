@@ -4,166 +4,121 @@ import queue
 import threading
 import utils
 import re
-import random
-import time
 
 
-WRITE_QUEUE = queue.Queue()
+QUEUE = queue.Queue()
 NUM_COOKIES = utils.num_cookies()
-NUM_COMPANIES_PER_COOKIE = 5
+NUM_COMPANIES_PER_COOKIE = 3
 MAX_WORKERS = NUM_COMPANIES_PER_COOKIE * NUM_COOKIES
 
 
-def _separate(response):
-	pattern = re.compile(r"(Article *[0-9]*:)", re.IGNORECASE)
-	temp = [item.strip() for item in pattern.split(response) if item != ""]
-	answers = []
-	for idx, item in enumerate(temp):
-		if idx == 0 and not item.startswith("Article:"):
-			continue
-		else:
-			if not item.startswith("Article:"):
-				answers.append(item)
-	return answers
+def _answers(text):
+	events = [
+		item for item in text.split("\n")
+		if item != "" and
+		not item.lower().startswith("here are") and
+		not item.startswith("```") and
+		not item.lower().startswith("i hope")
+		and not item.lower().startswith("hello")]
+	len_events = len(events)
+	if len_events == 6:
+		events = events[1:]
+	elif len_events == 7:
+		events = events[1:6]
+	elif len_events == 10:
+		temp = []
+		for i in range(0, 10, 2):
+			title, body = events[i], events[i+1]
+			content = title + "\n" + body
+			temp.append(content)
+		return temp
+	elif len_events == 11:
+		temp = []
+		events = events[1:]
+		for i in range(0, 10, 2):
+			title, body = events[i], events[i+1]
+			content = title + "\n" + body
+			temp.append(content)
+		return temp
+	elif len_events == 12:
+		events = events[1:11]
+		temp = []
+		for i in range(0, 10, 2):
+			title, body = events[i], events[i+1]
+			content = title + "\n" + body
+			temp.append(content)
+		return temp
+	return events
 
 
-def _initial_question(company_name):
-	return f'''
-	Write 5 made up news articles about {company_name} on different subject.
-	Make sure each article is about {company_name}.
-	Separate each article with "Article: ".
-	'''
-
-
-def _soft_pos_question(company_name, root_incident):
-	return f'''
-	Write 12 made up news articles that are direct follow-ups to {root_incident}.
-	Make sure each article is about {company_name}.
-	Separate each article with "Article: ".
-	'''
-
-
-def _soft_neg_question(company_name, root_incident):
-	return f'''
-	Write 2 made up news articles that are irrelevant to {root_incident}.
-	Make sure each article is about {company_name}.
-	Separate each article with "Article: ".
-	'''
-
-
-def _hard_neg_question0(company_name, root_incident):
-	return f'''
-	Write 2 made up news articles that are same to {root_incident}.
-	Make sure each article is not about {company_name}, and make sure to use different company name for each article.
-	Separate each article with "Article: ".
-	'''
-
-
-def _hard_neg_question1(company_name, root_incident):
-	return f'''
-	Write 2 made up news articles that are similar to {root_incident}.
-	Make sure each article is not about {company_name}, and make sure to use different company name for each article.
-	Separate each article with "Article: ".
-	'''
-
-
-def _hard_neg_question2(company_name, root_incident):
-	return f'''
-	Write 2 made up news articles follow-ups to {root_incident}. But replace {company_name} with a different company name for each article.
-	Make sure each article is about {company_name}.
-	Separate each article with "Article: ".
-	'''
+def _write_to_db():
+	with database.connect() as con:
+		cur = con.cursor()
+		num_workers = MAX_WORKERS
+		while True:
+			if num_workers == 0:
+				break
+			item = QUEUE.get()
+			if item is None:
+				num_workers -= 1
+				print(f"{num_workers}/{MAX_WORKERS} finished its job.")
+			else:
+				company_id, company_name = item[0]
+				root_event = item[1]
+				child_events = item[2:]
+				cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
+				root_id, = cur.fetchone()
+				cur.execute("INSERT INTO events VALUES(?,?,?)", (root_id, company_id, root_event))
+				cur.execute("INSERT INTO root_events VALUES(?,?)", (root_id, company_id))
+				for child_content, is_follow_up in child_events:
+					cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
+					child_id, = cur.fetchone()
+					cur.execute("INSERT INTO events VALUES(?,?,?)", (child_id, company_id, child_content))
+					cur.execute("INSERT INTO root_event_children VALUES(?,?,?,?)", (root_id, child_id, company_id, is_follow_up))
+				print(f"Inserting {company_name}")
+				con.commit()
 
 
 def _scrap(company_id, company_name, cookie_fname):
-	randint = random.randint(0, 20)
-	time.sleep(randint)
 	try:
-		root_incidents = _separate(bing.ask(_initial_question(company_name), cookie_fname))
-		print(f"root: {len(root_incidents)}")
-	except:
-		print(f"{cookie_fname} stopped at root")
-		WRITE_QUEUE.put(None)
-		return
-	for root_incident in root_incidents:
-		try:
+		root_events = _answers(bing.ask(f"Write 5 made-up news stories about company {company_name} on different topics. Make sure each story is at least 30 words. ", cookie_fname))
+		print(f"root: {len(root_events)} {company_name}")
+		for root_event in root_events:
 			data = []
 			data.append((company_id, company_name))
-			data.append(root_incident)
-			soft_pos = _separate(bing.ask(_soft_pos_question(company_name, root_incident), cookie_fname))
-			soft_neg = _separate(bing.ask(_soft_neg_question(company_name, root_incident), cookie_fname))
-			hard_neg0 = _separate(bing.ask(_hard_neg_question0(company_name, root_incident), cookie_fname))
-			hard_neg1 = _separate(bing.ask(_hard_neg_question1(company_name, root_incident), cookie_fname))
-			hard_neg2 = _separate(bing.ask(_hard_neg_question2(company_name, root_incident), cookie_fname))
-			print(f"soft_pos: {len(soft_pos)}")
-			print(f"soft_neg: {len(soft_neg)}")
-			print(f"hard_neg0: {len(hard_neg0)}")
-			print(f"hard_neg1: {len(hard_neg1)}")
-			print(f"hard_neg2: {len(hard_neg2)}")
-			for item in soft_pos:
-				data.append((item, 1))
-			for item in soft_neg:
-				data.append((item, 0))
-			for item in hard_neg0:
-				data.append((item, 0))
-			for item in hard_neg1:
-				data.append((item, 0))
-			for item in hard_neg2:
-				data.append((item, 0))
+			data.append(root_event)
+			pos_events = _answers(bing.ask(f'Write 5 made-up news stories that are direct follow-up to "{root_event}". Make sure each story is about company {company_name}. Make sure each story is at least 30 words.', cookie_fname))
+			neg_events = _answers(bing.ask(f'Write 5 made-up news stories that are irrelevant to "{root_event}". Make sure each story is about company {company_name}. Make sure each story is at least 30 words.', cookie_fname))
 
-			WRITE_QUEUE.put(data)
-		except:
-			print(f"{cookie_fname} stopped at children")
-			WRITE_QUEUE.put(None)
-			return
-	print(f"{cookie_fname} finished everything")
-	WRITE_QUEUE.put(None)
-
-
-def _write():
-	with database.connect() as con:
-		num_workers = MAX_WORKERS
-		cur = con.cursor()
-
-		while num_workers > 0:
-			item = WRITE_QUEUE.get()
-			if item is None:
-				num_workers -= 1
-				print(f"A worker finished its job. ({num_workers}/{MAX_WORKERS})")
-			else:
-				company_id, company_name = item[0]
-				print(f"Writing {company_name}")
-				root_incident = item[1]
-				cur.execute("SELECT ifnull(max(id)+1, 0) FROM incidents")
-				root_incident_id, = cur.fetchone()
-				cur.execute("INSERT INTO incidents VALUES(?,?,?)", (root_incident_id, company_id, root_incident))
-				cur.execute("INSERT INTO root_incidents VALUES(?,?)", (root_incident_id, company_id))
-
-				for content, is_follow_up in item[2:]:
-					cur.execute("SELECT ifnull(max(id)+1, 0) FROM incidents")
-					child_incident_id, = cur.fetchone()
-					cur.execute("INSERT INTO incidents VALUES(?,?,?)", (child_incident_id, company_id, content))
-					cur.execute("INSERT INTO root_incident_children VALUES(?,?,?,?)", (root_incident_id, child_incident_id, company_id, is_follow_up))
-				con.commit()
+			print(f"soft_pos: {len(pos_events)} {company_name}")
+			print(f"soft_neg: {len(neg_events)} {company_name}")
+			for pos_event in pos_events:
+				data.append((pos_event, 1))
+			for neg_event in neg_events:
+				data.append((neg_event, 0))
+			QUEUE.put(data)
+	except:
+		QUEUE.put(None)
+		return
+	QUEUE.put(None)
 
 
 def main():
 	with database.connect() as con:
-		write_db_thread = threading.Thread(target=_write)
-		write_db_thread.start()
+		write_thread = threading.Thread(target=_write_to_db)
+		write_thread.start()
 
-		scrap_threads = []
 		cur = con.cursor()
-		cur.execute("SELECT id, name FROM companies WHERE id NOT IN (SELECT DISTINCT company_id FROM root_incidents)")
-		all_companies = cur.fetchall()
-
+		cur.execute("SELECT id, name FROM companies WHERE id NOT IN (SELECT DISTINCT company_id FROM root_events)")
+		companies = cur.fetchall()
+		scrap_threads = []
 		leftend = 0
 		rightend = NUM_COMPANIES_PER_COOKIE
 
 		for i in range(NUM_COOKIES):
-			companies = all_companies[leftend:rightend]
-			for company_id, company_name in companies:
-				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"/Users/jihoon/code/bingchat/cookie{i}.txt"))
+			target_companies = companies[leftend:rightend]
+			for company_id, company_name in target_companies:
+				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"cookie{i}.txt"))
 				t.start()
 				scrap_threads.append(t)
 			leftend = rightend
@@ -172,7 +127,7 @@ def main():
 		for t in scrap_threads:
 			t.join()
 
-		write_db_thread.join()
+		write_thread.join()
 
 
 if __name__ == "__main__":

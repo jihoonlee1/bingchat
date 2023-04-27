@@ -14,7 +14,7 @@ def _cookie(cookie_fname):
 
 
 def _headers(cookie_fname):
-	with open("/Users/jihoon/code/bingchat/headers.json", "r") as f:
+	with open("headers.json", "r") as f:
 		headers = json.load(f)
 		headers["cookie"] = _cookie(cookie_fname)
 		headers["x-ms-client-request-id"] = str(uuid.uuid4())
@@ -54,7 +54,7 @@ def _precise():
 
 def _chathub_ws_msg(msg, cookie_fname, cdxtone=_creative()):
 	conv_id, client_id, conv_sig = _create_conversation(cookie_fname)
-	with open("/Users/jihoon/code/bingchat/websocket.json", "r") as f:
+	with open("websocket.json", "r") as f:
 		obj = json.load(f)
 		obj["arguments"][0]["traceId"] = secrets.token_hex(16)
 		obj["arguments"][0]["conversationSignature"] = conv_sig
@@ -92,6 +92,9 @@ def ask(client_msg, cookie_fname):
 
 
 if __name__ == "__main__":
-	question = "Hello bing!"
-	answer = ask(question, "/Users/jihoon/code/bingchat/cookie0.txt")
+	# question = "Write 5 made-up news articles about Berkshire Hathaway."
+	root_incident = '''Berkshire Hathaway launches its own streaming service
+Berkshire Hathaway, the diversified holding company owned by Warren Buffett, has announced the launch of its own streaming service, called BH TV. The service will offer exclusive content from Berkshire Hathaway's subsidiaries and partners, such as Geico, Dairy Queen, Coca-Cola, Apple, and Amazon. The service will also feature original shows and documentaries about Buffett's life and investment philosophy, as well as interviews with celebrities and business leaders. BH TV will be available for $9.99 per month or $99 per year.'''
+	question = f'Write 5 made up news articles that are direct follow-up to {root_incident}. Make sure each article is about Berkshire Hathaway.'
+	answer = ask(question, "cookie29.txt")
 	print(answer)

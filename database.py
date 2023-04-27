@@ -18,25 +18,25 @@ CREATE TABLE IF NOT EXISTS companies(
 );
 """,
 """
-CREATE TABLE IF NOT EXISTS incidents(
+CREATE TABLE IF NOT EXISTS events(
 	id         INTEGER NOT NULL PRIMARY KEY,
 	company_id INTEGER NOT NULL REFERENCES companies(id),
 	content    TEXT    NOT NULL
 );
 """,
 """
-CREATE TABLE IF NOT EXISTS root_incidents(
-	id         INTEGER NOT NULL PRIMARY KEY REFERENCES incidents(id),
+CREATE TABLE IF NOT EXISTS root_events(
+	id         INTEGER NOT NULL PRIMARY KEY REFERENCES events(id),
 	company_id INTEGER NOT NULL             REFERENCES companies(id)
 );
 """,
 """
-CREATE TABLE IF NOT EXISTS root_incident_children(
-	root_incident_id   INTEGER NOT NULL REFERENCES root_incidents(id),
-	child_incident_id  INTEGER NOT NULL REFERENCES incidents(id),
+CREATE TABLE IF NOT EXISTS root_event_children(
+	root_event_id   INTEGER NOT NULL REFERENCES root_events(id),
+	child_event_id  INTEGER NOT NULL REFERENCES events(id),
 	company_id         INTEGER NOT NULL REFERENCES companies(id),
 	is_follow_up       INTEGER NOT NULL,
-	PRIMARY KEY(root_incident_id, child_incident_id)
+	PRIMARY KEY(root_event_id, child_event_id)
 );
 """
 ]
@@ -47,7 +47,7 @@ def connect(database="database.sqlite", mode="rw"):
 
 
 def _add_companies(con, cur):
-	with open("/Users/jihoon/code/bingchat/companies.json", "r") as f:
+	with open("companies.json", "r") as f:
 		companies = json.load(f)
 		for c in companies:
 			try:

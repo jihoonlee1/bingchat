@@ -7,7 +7,7 @@ from transformers import BertTokenizer, BertForNextSentencePrediction, logging
 
 logging.set_verbosity_error()
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-learning_rate = 0.0005
+learning_rate = 0.0003
 model = BertForNextSentencePrediction.from_pretrained("bert-base-uncased").to(device)
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
@@ -15,19 +15,13 @@ batch_size = 16
 epochs = 4
 
 
-def clean_text(text):
-	return re.sub(r"\n+", " ", text).strip()
-
-
 def train_test_root_ids(cur):
-	cur.execute("SELECT id FROM root_incidents")
+	cur.execute("SELECT id FROM root_events")
 	root_ids = cur.fetchall()
 	num_roots = len(root_ids)
 	train_idx = round(num_roots * 0.9)
 	train_root_ids = root_ids[:train_idx]
 	test_root_ids = root_ids[train_idx:]
-	random.shuffle(train_root_ids)
-	random.shuffle(test_root_ids)
 	return train_root_ids, test_root_ids
 
 
@@ -36,14 +30,14 @@ def prepare_data(cur, root_ids):
 	sent1 = []
 	labels = []
 	for root_id, in root_ids:
-		cur.execute("SELECT content FROM incidents WHERE id = ?", (root_id, ))
+		cur.execute("SELECT content FROM events WHERE id = ?", (root_id, ))
 		root_content, = cur.fetchone()
-		cur.execute("SELECT child_incident_id, is_follow_up FROM root_incident_children WHERE root_incident_id = ?", (root_id, ))
+		cur.execute("SELECT child_event_id, is_follow_up FROM root_event_children WHERE root_event_id = ?", (root_id, ))
 		for child_id, is_follow_up in cur.fetchall():
-			cur.execute("SELECT content FROM incidents WHERE id = ?", (child_id, ))
+			cur.execute("SELECT content FROM events WHERE id = ?", (child_id, ))
 			child_content, = cur.fetchone()
-			sent0.append(clean_text(root_content))
-			sent1.append(clean_text(child_content))
+			sent0.append(root_content)
+			sent1.append(child_content)
 			if is_follow_up == 0:
 				labels.append(1)
 			elif is_follow_up == 1:
@@ -51,7 +45,7 @@ def prepare_data(cur, root_ids):
 	return sent0, sent1, labels
 
 
-class IncidentDatset(torch.utils.data.Dataset):
+class EventDataset(torch.utils.data.Dataset):
 
 	def __init__(self, encodings):
 		self.input_ids = encodings["input_ids"]
@@ -131,12 +125,12 @@ def main():
 
 		encodings_train = tokenizer(sent0_train, sent1_train, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
 		encodings_train["labels"] = torch.LongTensor([labels_train]).T
-		dataset_train = IncidentDatset(encodings_train)
+		dataset_train = EventDataset(encodings_train)
 		dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
 
-		encodings_test= tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+		encodings_test = tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
 		encodings_test["labels"] = torch.LongTensor([labels_test]).T
-		dataset_test= IncidentDatset(encodings_test)
+		dataset_test= EventDataset(encodings_test)
 		dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
 
 		for epoch in range(1, epochs+1):

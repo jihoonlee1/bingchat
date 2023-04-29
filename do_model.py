@@ -7,12 +7,13 @@ from transformers import BertTokenizer, BertForNextSentencePrediction, logging
 
 logging.set_verbosity_error()
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-learning_rate = 0.0003
+learning_rate = 0.00005
 model = BertForNextSentencePrediction.from_pretrained("bert-base-uncased").to(device)
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
-batch_size = 16 
-epochs = 4
+loss_fn = torch.nn.BCEWithLogitsLoss()
+batch_size = 4
+epochs = 20
 
 
 def train_test_root_ids(cur):
@@ -39,9 +40,9 @@ def prepare_data(cur, root_ids):
 			sent0.append(root_content)
 			sent1.append(child_content)
 			if is_follow_up == 0:
-				labels.append(1)
+				labels.append([0, 1])
 			elif is_follow_up == 1:
-				labels.append(0)
+				labels.append([1, 0])
 	return sent0, sent1, labels
 
 
@@ -73,8 +74,8 @@ def train_loop(dataloader, epoch):
 		token_type_ids = batch["token_type_ids"].to(device)
 		attention_mask = batch["attention_mask"].to(device)
 		labels = batch["labels"].to(device)
-		output = model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask, labels=labels)
-		loss = output.loss
+		output = model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+		loss = loss_fn(output.logits, labels)
 		optimizer.zero_grad()
 		loss.backward()
 		optimizer.step()
@@ -103,9 +104,9 @@ def test_loop(dataloader, epoch):
 			token_type_ids = batch["token_type_ids"].to(device)
 			attention_mask = batch["attention_mask"].to(device)
 			labels = batch["labels"].to(device)
-			output = model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask, labels=labels)
-			correct = correct + (output.logits.argmax(1) == labels.squeeze()).type(torch.float).sum().item()
-			loss = output.loss
+			output = model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
+			#correct = correct + (output.logits.argmax(1) == labels.squeeze()).type(torch.float).sum().item()
+			loss = loss_fn(output.logits, labels)
 			loss_item = loss.item()
 			print(f"Loss: {loss_item}")
 			total_loss += loss_item
@@ -124,12 +125,12 @@ def main():
 		sent0_test, sent1_test, labels_test = prepare_data(cur, test_ids)
 
 		encodings_train = tokenizer(sent0_train, sent1_train, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
-		encodings_train["labels"] = torch.LongTensor([labels_train]).T
+		encodings_train["labels"] = torch.tensor(labels_train, dtype=torch.float64)
 		dataset_train = EventDataset(encodings_train)
 		dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
 
 		encodings_test = tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
-		encodings_test["labels"] = torch.LongTensor([labels_test]).T
+		encodings_test["labels"] = torch.tensor(labels_test, dtype=torch.float64)
 		dataset_test= EventDataset(encodings_test)
 		dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
 

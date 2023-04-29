@@ -7,11 +7,11 @@ from transformers import BertTokenizer, BertForNextSentencePrediction, logging
 
 logging.set_verbosity_error()
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-learning_rate = 1e-5
+learning_rate = 0.0005
 model = BertForNextSentencePrediction.from_pretrained("bert-base-uncased").to(device)
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
-batch_size = 8
+batch_size = 16 
 epochs = 4
 
 

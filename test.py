@@ -1,19 +1,9 @@
-import database
+import re
 
 
-with database.connect() as con:
-	cur = con.cursor()
-	cur.execute("SELECT count(*), company_id FROM root_events GROUP BY company_id ORDER BY count(*) DESC")
-	for count, company_id in cur.fetchall():
-		if count != 5:
-			print(f"root: {count}, {company_id}")
+text = '''- NVIDIA - Sony - Amazon For example, if you choose NVIDIA, the article would look like this: # NVIDIA announces cloud gaming partnership with Nintendo NVIDIA and Nintendo have announced a new partnership that will bring GeForce Now to the Nintendo Switch. The partnership will allow Switch owners to access over 100 games on their console via streaming, using their GeForce Now subscription. The service will launch later this year and will require a compatible controller and a stable internet connection. The partnership is a win-win for both companies, as NVIDIA expands its cloud gaming reach to a new audience, and Nintendo benefits from a larger and more diverse library of games on its platform. Both companies have expressed their excitement and commitment to delivering a great gaming experience for their fans. "Nintendo has always been a leader in innovation and creativity in the gaming industry, and we are thrilled to partner with them to bring GeForce Now to the Switch," said Phil Eisler, vice president of GeForce Now at NVIDIA. "We believe that gamers should be able to play the games they love on the devices they choose, and this partnership will make that possible for millions of Switch owners around the world." "We are delighted to work with NVIDIA to bring GeForce Now to the Switch," said Shuntaro Furukawa, president of Nintendo. "This partnership will enrich the gaming experience for our customers, who will be able to enjoy a wide range of games on their Switch. We look forward to collaborating with NVIDIA to deliver more fun and joy to gamers everywhere."'''
+text2 = '''Here is a possible rewrite of the article with a different company name: # Ford to invest $1 billion in Detroit plant for electric vehicles Ford, the second-largest automaker in the US, has announced that it will invest $1 billion in its Michigan Assembly Plant in Detroit to produce electric vehicles. The investment will create 1,000 new jobs and enable the plant to build two new electric SUVs for the Ford and Lincoln brands. The plant currently produces the Ford Ranger and the Ford Bronco. The announcement comes as part of Ford's ambitious plan to launch 40 new electric models by 2025 and achieve a 50% electrified mix in the US by 2030. The company also plans to invest $30 billion in electrification and software development over the next four years. Ford North America President Kumar Galhotra said: "This investment is a testament to our commitment to electrify our iconic brands and deliver exciting products that meet the needs and expectations of our customers. We are proud to invest in our Detroit plant and create more opportunities for the hard-working and talented people of this city." Detroit Mayor Mike Duggan said: "This is a great day for Detroit and a great day for the future of Ford. This investment will not only create more jobs and economic activity in our city, but also help us fight climate change by reducing greenhouse gas emissions from transportation. I want to thank Ford for choosing Detroit as a key partner in their electrification strategy."'''
 
-	cur.execute("SELECT count(*), company_id FROM root_event_children WHERE is_follow_up = 0 GROUP BY root_event_id ORDER BY count(*) DESC")
-	for count, company_id in cur.fetchall():
-		if count != 5:
-			print(f"neg: {count}, {company_id}")
 
-	cur.execute("SELECT count(*), company_id FROM root_event_children WHERE is_follow_up = 1 GROUP BY root_event_id ORDER BY count(*) DESC")
-	for count, company_id in cur.fetchall():
-		if count != 5:
-			print(f"pos: {count}, {company_id}")
+text2 = re.sub(r".+like this: #", "", text)
+print(text2)

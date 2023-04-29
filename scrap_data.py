@@ -4,11 +4,12 @@ import queue
 import threading
 import utils
 import re
+import random
 
 
 QUEUE = queue.Queue()
 NUM_COOKIES = utils.num_cookies()
-NUM_COMPANIES_PER_COOKIE = 5
+NUM_COMPANIES_PER_COOKIE = 1
 MAX_WORKERS = NUM_COMPANIES_PER_COOKIE * NUM_COOKIES
 
 
@@ -71,20 +72,22 @@ def _write_to_db():
 				con.commit()
 
 
-def _scrap(company_id, company_name, cookie_fname):
+def _scrap(company_id, company_name, random_company_names, len_random_company_names, cookie_fname):
 	try:
-		root_events = _answers(bing.ask(f'Write 3 news articles about company {company_name} on different topic. Separate each article with "Article: ".', cookie_fname))
+		root_events = _answers(bing.ask(f'Write 5 made-up news articles about company {company_name} on different subject. Separate each article with "Article: ".', cookie_fname))
 		print(f"{company_name} root: {len(root_events)}")
 		for root_event0 in root_events:
+			random_company_idx = random.randint(0, len_random_company_names-1)
+			random_company_name, = random_company_names[random_company_idx]
 			data = []
 			data.append((company_id, company_name))
-			temp0 = bing.ask(f'Write 3 made up news articles that are direct follow-up to "{root_event0}". Make sure each article is about company {company_name}. Separate each article with "Article: ".', cookie_fname)
-			temp1 = bing.ask(f'Replace {company_name} with a different company name in {temp0}', cookie_fname)
+			temp0 = bing.ask(f'Write 5 possible news articles that are direct follow-ups to "{root_event0}". Make sure each article is about company {company_name}. Separate each article with "Article: ".', cookie_fname)
+			temp1 = bing.ask(f'Replace {company_name} with {random_company_name} in {temp0}.', cookie_fname)
 			pos_events0 = _answers(temp0)
-			neg_events0 = _answers(bing.ask(f'Write 3 made-up news articles that are irrelevant to "{root_event0}". Make sure each article is about company {company_name}. Separate each article with "Article: ".', cookie_fname))
+			neg_events0 = _answers(bing.ask(f'Write 5 news articles that are irrelevant to "{root_event0}". Make sure each article is about company {company_name}. Separate each article with "Article: ".', cookie_fname))
 			neg_events1 = _answers(temp1)
 			root_event1 = neg_events0[0]
-			pos_events1 = _answers(bing.ask(f'Write 3 made-up news articles that are direct follow-up to "{root_event1}". Make sure each article is about company {company_name}. Separate each article with "Article: ".', cookie_fname))
+			pos_events1 = _answers(bing.ask(f'Write 5 possible news articles that are direct follow-ups to "{root_event1}". Make sure each article is about company {company_name}. Separate each article with "Article: ".', cookie_fname))
 			print(f"{company_name} pos0: {len(pos_events0)}")
 			print(f"{company_name} pos1: {len(pos_events1)}")
 			print(f"{company_name} neg0: {len(neg_events0)}")
@@ -128,7 +131,10 @@ def main():
 		for i in range(NUM_COOKIES):
 			target_companies = companies[leftend:rightend]
 			for company_id, company_name in target_companies:
-				t = threading.Thread(target=_scrap, args=(company_id, company_name, f"cookie{i}.txt"))
+				cur.execute("SELECT name FROM companies WHERE id != ?", (company_id, ))
+				random_company_names = cur.fetchall()
+				len_random_company_name = len(random_company_names)
+				t = threading.Thread(target=_scrap, args=(company_id, company_name, random_company_names, len_random_company_name, f"cookie{i}.txt"))
 				t.start()
 				scrap_threads.append(t)
 			leftend = rightend

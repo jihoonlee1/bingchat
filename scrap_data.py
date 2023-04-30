@@ -94,11 +94,11 @@ def root_question(company_name):
 
 
 def pos_question(company_name, root_event):
-	return f'Write 5 possible news stories about company {company_name} that are considered direct follow-ups to {root_event}. Separate each story with "Article: ".'
+	return f'Write 5 possible news stories about company {company_name} that are considered direct follow-ups to {root_event}. Make sure {company_name} in each of the article. Separate each story with "Article: ".'
 
 
 def neg_question(company_name, root_event):
-	return f'Write 5 news stories about {company_name} that are irrelevant to {root_event}. Separate each story with "Article: ".'
+	return f'Write 5 news stories about {company_name} that are irrelevant to {root_event}. Make sure {company_name} is in each of the article. Separate each story with "Article: ".'
 
 
 def _scrap(company_id, company_name, random_company_names, len_random_company_names, cookie_fname):

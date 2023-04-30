@@ -7,13 +7,13 @@ from transformers import BertTokenizer, BertForNextSentencePrediction, logging
 
 logging.set_verbosity_error()
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-learning_rate = 0.0003
+learning_rate = 0.00003
 model = BertForNextSentencePrediction.from_pretrained("bert-base-uncased").to(device)
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
 loss_fn = torch.nn.BCEWithLogitsLoss()
-batch_size = 16 
-epochs = 50 
+batch_size = 4 
+epochs = 20 
 
 
 def train_test_root_ids(cur):
@@ -43,17 +43,33 @@ def prepare_data(cur, root_ids):
 				labels.append([0, 1])
 			elif is_follow_up == 1:
 				labels.append([1, 0])
+
 		cur.execute("SELECT company_id FROM events WHERE id = ?", (root_id, ))
 		company_id, = cur.fetchone()
+		cur.execute("SELECT name FROM companies WHERE id = ?", (company_id, ))
+		company_name, = cur.fetchone()
 		cur.execute("SELECT content FROM events WHERE company_id != ?", (company_id, ))
 		random_events = cur.fetchall()
 		len_random_events = len(random_events)
-		for _ in range(5):
-			randint = random.randint(0, len_random_events-1)
+		random_samples = random.sample(range(0, len_random_events-1), 5)
+		for randint in random_samples:
 			random_content, = random_events[randint]
 			sent0.append(root_content)
 			sent1.append(random_content)
 			labels.append([0, 1])
+
+		cur.execute("SELECT name FROM companies WHERE id != ?", (company_id, ))
+		other_company_names = cur.fetchall()
+		random_company_name, = other_company_names[random.randint(0, len(other_company_names)-1)]
+		cur.execute("SELECT child_event_id FROM root_event_children WHERE root_event_id = ? AND is_follow_up = 1", (root_id, ))
+		for child_id, in cur.fetchall():
+			cur.execute("SELECT content FROM events WHERE id = ?", (child_id, ))
+			content, = cur.fetchone()
+			content = content.replace(company_name, random_company_name)
+			sent0.append(root_content)
+			sent1.append(content)
+			labels.append([0, 1])
+	
 	return sent0, sent1, labels
 
 

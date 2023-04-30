@@ -9,10 +9,8 @@ checkpoint = torch.load("model_epoch7.pth")
 model.load_state_dict(checkpoint["model_state_dict"])
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
-
-sent1 = "Microsoft goes to war against Apple."
-sent2 = "Microsoft is an awesome company"
-print(sent2)
+sent1 = "Ukraine goes to war against Russia"
+sent2 = "Ukraine buys product from UK for their war preparation."
 inputs = tokenizer(sent1, sent2, return_tensors="pt", max_length=512, padding="max_length", truncation=True)
 pred = model(**inputs.to(device))
 print(torch.sigmoid(pred.logits))

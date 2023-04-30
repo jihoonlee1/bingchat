@@ -13,14 +13,14 @@ tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
 loss_fn = torch.nn.BCEWithLogitsLoss()
 batch_size = 16 
-epochs = 20 
+epochs = 50 
 
 
 def train_test_root_ids(cur):
 	cur.execute("SELECT id FROM root_events")
 	root_ids = cur.fetchall()
 	num_roots = len(root_ids)
-	train_idx = round(num_roots)
+	train_idx = round(num_roots * 0.9)
 	train_root_ids = root_ids[:train_idx]
 	test_root_ids = root_ids[train_idx:]
 	return train_root_ids, test_root_ids
@@ -43,6 +43,17 @@ def prepare_data(cur, root_ids):
 				labels.append([0, 1])
 			elif is_follow_up == 1:
 				labels.append([1, 0])
+		cur.execute("SELECT company_id FROM events WHERE id = ?", (root_id, ))
+		company_id, = cur.fetchone()
+		cur.execute("SELECT content FROM events WHERE company_id != ?", (company_id, ))
+		random_events = cur.fetchall()
+		len_random_events = len(random_events)
+		for _ in range(5):
+			randint = random.randint(0, len_random_events-1)
+			random_content, = random_events[randint]
+			sent0.append(root_content)
+			sent1.append(random_content)
+			labels.append([0, 1])
 	return sent0, sent1, labels
 
 
@@ -131,15 +142,15 @@ def main():
 		dataset_train = EventDataset(encodings_train)
 		dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
 
-		#encodings_test = tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
-		#encodings_test["labels"] = torch.tensor(labels_test, dtype=torch.float64)
-		#dataset_test = EventDataset(encodings_test)
-		#dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
+		encodings_test = tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+		encodings_test["labels"] = torch.tensor(labels_test, dtype=torch.float64)
+		dataset_test = EventDataset(encodings_test)
+		dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
 
 		for epoch in range(1, epochs+1):
 			print(f"Epoch: {epoch}")
 			train_loop(dataloader_train, epoch)
-			#test_loop(dataloader_test, epoch)
+			test_loop(dataloader_test, epoch)
 
 
 if __name__ == "__main__":

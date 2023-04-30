@@ -92,6 +92,6 @@ def ask(client_msg, cookie_fname):
 
 
 if __name__ == "__main__":
-	root = "Comcast sued by former employee who accused Jeff Shell of harassment and discrimination A former employee of Comcast's NBCUniversal division has filed a lawsuit against the company and its former CEO Jeff Shell, alleging that she was subjected to sexual harassment and discrimination by Shell and that the company failed to protect her. The plaintiff, who is not named in the complaint, claims that Shell made unwanted sexual advances towards her, pressured her to have an affair with him, and retaliated against her when she rejected him. She also accuses Comcast of creating a hostile work environment and covering up Shell's misconduct."
-	q = f'Write 5 sentences about Comcast that is not related to {root}.'
-	print(ask(q, "cookie31.txt"))
+	response = ask("hello bing", "cookie.txt")
+	print(response)
+

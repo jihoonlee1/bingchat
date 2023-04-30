@@ -44,16 +44,8 @@ def _write_to_db():
 			else:
 				company_id, company_name = item[0]
 				root0 = item[1]
-				root1 = item[2]
-				root2 = item[3]
-
 				root_event0 = root0[0]
-				root_event1 = root1[0]
-				root_event2 = root2[0]
-
 				rest_events0 = root0[1:]
-				rest_events1 = root1[1:]
-				rest_events2 = root2[1:]
 
 				cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
 				root_id0, = cur.fetchone()
@@ -65,40 +57,20 @@ def _write_to_db():
 					cur.execute("INSERT INTO events VALUES(?,?,?)", (child_id0, company_id, child_content))
 					cur.execute("INSERT INTO root_event_children VALUES(?,?,?,?)", (root_id0, child_id0, company_id, is_follow_up))
 
-				cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
-				root_id1, = cur.fetchone()
-				cur.execute("INSERT INTO events VALUES(?,?,?)", (root_id1, company_id, root_event1))
-				cur.execute("INSERT INTO root_events VALUES(?,?)", (root_id1, company_id))
-				for child_content, is_follow_up in rest_events1:
-					cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
-					child_id1, = cur.fetchone()
-					cur.execute("INSERT INTO events VALUES(?,?,?)", (child_id1, company_id, child_content))
-					cur.execute("INSERT INTO root_event_children VALUES(?,?,?,?)", (root_id1, child_id1, company_id, is_follow_up))
-
-				cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
-				root_id2, = cur.fetchone()
-				cur.execute("INSERT INTO events VALUES(?,?,?)", (root_id2, company_id, root_event2))
-				cur.execute("INSERT INTO root_events VALUES(?,?)", (root_id2, company_id))
-				for child_content, is_follow_up in rest_events2:
-					cur.execute("SELECT ifnull(max(id)+1, 0) FROM events")
-					child_id2, = cur.fetchone()
-					cur.execute("INSERT INTO events VALUES(?,?,?)", (child_id2, company_id, child_content))
-					cur.execute("INSERT INTO root_event_children VALUES(?,?,?,?)", (root_id2, child_id2, company_id, is_follow_up))
-
 				print(f"Inserting {company_name}")
 				con.commit()
 
 
 def root_question(company_name):
-	return f'Write 5 news stories about company {company_name} on different subject. Separate each story with "Article: ".'
+	return f'Write 5 news stories about company "{company_name}" on different subject. Separate each story with "Article: ".'
 
 
 def pos_question(company_name, root_event):
-	return f'Write 5 possible news stories about company {company_name} that are considered direct follow-ups to {root_event}. Make sure {company_name} in each of the article. Separate each story with "Article: ".'
+	return f'Write 5 possible news stories about company "{company_name}" that are considered direct follow-ups to "{root_event}". Make sure company "{company_name}" in each of the article. Separate each story with "Article: ".'
 
 
 def neg_question(company_name, root_event):
-	return f'Write 5 news stories about {company_name} that are irrelevant to {root_event}. Make sure {company_name} is in each of the article. Separate each story with "Article: ".'
+	return f'Write 5 news stories about company "{company_name}" that are completely irrelevant to "{root_event}". Make sure company "{company_name}" is in each of the article. Separate each story with "Article: ".'
 
 
 def _scrap(company_id, company_name, random_company_names, len_random_company_names, cookie_fname):
@@ -110,38 +82,19 @@ def _scrap(company_id, company_name, random_company_names, len_random_company_na
 			data.append((company_id, company_name))
 			pos_events0= _answers(bing.ask(pos_question(company_name, root_event0), cookie_fname))
 			neg_events0 = _answers(bing.ask(neg_question(company_name, root_event0), cookie_fname))
-			root_event1 = neg_events0[0]
-			root_event2 = neg_events0[1]
-			pos_events1 = _answers(bing.ask(pos_question(company_name, root_event1), cookie_fname))
-			pos_events2 = _answers(bing.ask(pos_question(company_name, root_event2), cookie_fname))
 
 			print(len(pos_events0))
-			print(len(pos_events1))
-			print(len(pos_events2))
 			print(len(neg_events0))
 
 			root_container0 = []
-			root_container1 = []
-			root_container2 = []
-
 			root_container0.append(root_event0)
+
 			for event in pos_events0:
 				root_container0.append([event, 1])
 			for event in neg_events0:
 				root_container0.append([event, 0])
 
-			root_container1.append(root_event1)
-			for event in pos_events1:
-				root_container1.append([event, 1])
-
-			root_container2.append(root_event2)
-			for event in pos_events2:
-				root_container2.append([event, 1])
-
 			data.append(root_container0)
-			data.append(root_container1)
-			data.append(root_container2)
-
 			QUEUE.put(data)
 	except Exception as e:
 		print(e)

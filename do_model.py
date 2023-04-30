@@ -7,20 +7,20 @@ from transformers import BertTokenizer, BertForNextSentencePrediction, logging
 
 logging.set_verbosity_error()
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-learning_rate = 0.00005
+learning_rate = 0.0003
 model = BertForNextSentencePrediction.from_pretrained("bert-base-uncased").to(device)
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
 loss_fn = torch.nn.BCEWithLogitsLoss()
-batch_size = 4
-epochs = 20
+batch_size = 16 
+epochs = 20 
 
 
 def train_test_root_ids(cur):
 	cur.execute("SELECT id FROM root_events")
 	root_ids = cur.fetchall()
 	num_roots = len(root_ids)
-	train_idx = round(num_roots * 0.9)
+	train_idx = round(num_roots)
 	train_root_ids = root_ids[:train_idx]
 	test_root_ids = root_ids[train_idx:]
 	return train_root_ids, test_root_ids
@@ -105,7 +105,7 @@ def test_loop(dataloader, epoch):
 			attention_mask = batch["attention_mask"].to(device)
 			labels = batch["labels"].to(device)
 			output = model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask)
-			#correct = correct + (output.logits.argmax(1) == labels.squeeze()).type(torch.float).sum().item()
+			correct = correct + (output.logits.argmax(1) == labels.argmax(1)).type(torch.float).sum().item()
 			loss = loss_fn(output.logits, labels)
 			loss_item = loss.item()
 			print(f"Loss: {loss_item}")
@@ -124,20 +124,22 @@ def main():
 		sent0_train, sent1_train, labels_train = prepare_data(cur, train_ids)
 		sent0_test, sent1_test, labels_test = prepare_data(cur, test_ids)
 
+		print(len(sent0_train))
+		print(len(sent0_test))
 		encodings_train = tokenizer(sent0_train, sent1_train, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
 		encodings_train["labels"] = torch.tensor(labels_train, dtype=torch.float64)
 		dataset_train = EventDataset(encodings_train)
 		dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
 
-		encodings_test = tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
-		encodings_test["labels"] = torch.tensor(labels_test, dtype=torch.float64)
-		dataset_test= EventDataset(encodings_test)
-		dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
+		#encodings_test = tokenizer(sent0_test, sent1_test, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+		#encodings_test["labels"] = torch.tensor(labels_test, dtype=torch.float64)
+		#dataset_test = EventDataset(encodings_test)
+		#dataloader_test = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=True)
 
 		for epoch in range(1, epochs+1):
 			print(f"Epoch: {epoch}")
 			train_loop(dataloader_train, epoch)
-			test_loop(dataloader_test, epoch)
+			#test_loop(dataloader_test, epoch)
 
 
 if __name__ == "__main__":

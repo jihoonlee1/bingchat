@@ -1,0 +1,18 @@
+{
+	"Accept": "application/json",
+	"Accept-Encoding": "gzip, deflate, br",
+	"Accept-Language": "en-CA,en-US;q=0.9,en;q=0.8",
+	"Cache-Control": "no-cache",
+	"Connection": "keep-alive",
+	"Host": "www.bing.com",
+	"Pragma": "no-cache",
+	"Referer": "https://www.bing.com/search?form=MY0291&OCID=MY0291&q=Bing+AI&showconv=1",
+	"Sec-Fetch-Dest": "empty",
+	"Sec-Fetch-Mode": "cors",
+	"Sec-Fetch-Site": "same-origin",
+	"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.41",
+	"x-ms-useragent": "azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.10.0 OS/MacIntel",
+	"Cookie": null,
+	"x-ms-client-request-id": null,
+	"x-forwarded-for": null
+}

@@ -31,45 +31,49 @@ def prepare_data(cur, root_ids):
 	sent1 = []
 	labels = []
 	for root_id, in root_ids:
-		cur.execute("SELECT content FROM events WHERE id = ?", (root_id, ))
-		root_content, = cur.fetchone()
-		cur.execute("SELECT child_event_id, is_follow_up FROM root_event_children WHERE root_event_id = ?", (root_id, ))
-		for child_id, is_follow_up in cur.fetchall():
-			cur.execute("SELECT content FROM events WHERE id = ?", (child_id, ))
-			child_content, = cur.fetchone()
-			sent0.append(root_content)
-			sent1.append(child_content)
-			if is_follow_up == 0:
-				labels.append([0, 1])
-			elif is_follow_up == 1:
-				labels.append([1, 0])
-
-		cur.execute("SELECT company_id FROM events WHERE id = ?", (root_id, ))
+		cur.execute("SELECT company_id FROM root_events WHERE id = ?", (root_id, ))
 		company_id, = cur.fetchone()
 		cur.execute("SELECT name FROM companies WHERE id = ?", (company_id, ))
 		company_name, = cur.fetchone()
-		cur.execute("SELECT content FROM events WHERE company_id != ?", (company_id, ))
-		random_events = cur.fetchall()
-		len_random_events = len(random_events)
-		random_samples = random.sample(range(0, len_random_events-1), 5)
-		for randint in random_samples:
-			random_content, = random_events[randint]
-			sent0.append(root_content)
-			sent1.append(random_content)
-			labels.append([0, 1])
-
-		cur.execute("SELECT name FROM companies WHERE id != ?", (company_id, ))
-		other_company_names = cur.fetchall()
-		random_company_name, = other_company_names[random.randint(0, len(other_company_names)-1)]
-		cur.execute("SELECT child_event_id FROM root_event_children WHERE root_event_id = ? AND is_follow_up = 1", (root_id, ))
-		for child_id, in cur.fetchall():
+		cur.execute("SELECT id, name FROM companies WHERE id != ", (company_id, ))
+		other_companies = cur.fetchall()
+		num_other_companies = len(other_companies)
+		other_company_id, other_company_name = other_companies[random.randint(0, num_other_companies-1)]
+		
+		cur.execute("SELECT content FROM events WHERE id = ?", (root_id, ))
+		root_content, = cur.fetchone()
+		cur.execute("SELECT child_event_id FROM root_event_children WHERE root_event_id = ? AND is_follow_up = 0", (root_id, ))
+		non_follow_up_ids = cur.fetchall()
+		for child_id, in non_follow_up_ids:
 			cur.execute("SELECT content FROM events WHERE id = ?", (child_id, ))
 			content, = cur.fetchone()
-			content = content.replace(company_name, random_company_name)
 			sent0.append(root_content)
 			sent1.append(content)
 			labels.append([0, 1])
-	
+
+		cur.execute("SELECT child_event_id FROM root_event_children WHERE root_event_id = ? AND is_follow_up = 1", (root_id, ))
+		follow_up_ids = cur.fetchall()
+		for child_id, in follow_up_ids:
+			cur.execute("SELECT content FROM events WHERE id = ?", (child_id, ))
+			content, = cur.fetchone()
+			diff_comp_content = content.replace(company_name, other_company_name)
+			sent0.append(root_content)
+			sent0.append(root_content)
+			sent1.append(content)
+			sent1.append(diff_comp_content)
+			labels.append([1, 0])
+			labels.append([0, 1])
+
+		cur.execute("SELECT content FROM events WHERE company_id != ?", (company_id, ))
+		diff_comp_events = cur.fetchall()
+		num_diff_comp_events = len(diff_comp_events)
+		randints = random.sample(range(0, num_diff_comp_events-1), 5)
+		for randint in randints:
+			diff_comp_event, = diff_comp_events[randint]
+			sent0.append(root_content)
+			sent1.append(diff_comp_event)
+			labels.append([0, 1])
+
 	return sent0, sent1, labels
 
 
@@ -150,9 +154,16 @@ def main():
 		train_ids, test_ids = train_test_root_ids(cur)
 		sent0_train, sent1_train, labels_train = prepare_data(cur, train_ids)
 		sent0_test, sent1_test, labels_test = prepare_data(cur, test_ids)
-
-		print(len(sent0_train))
-		print(len(sent0_test))
+		
+		count_yes = 0 
+		count_no = 0 
+		for item in sent0_train:
+			if item == [0, 1]:
+				count_no += 1
+			elif item == [1, 0]:
+				count_yes += 1
+		print(count_yes)
+		print(count_no)
 		encodings_train = tokenizer(sent0_train, sent1_train, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
 		encodings_train["labels"] = torch.tensor(labels_train, dtype=torch.float64)
 		dataset_train = EventDataset(encodings_train)
@@ -165,8 +176,8 @@ def main():
 
 		for epoch in range(1, epochs+1):
 			print(f"Epoch: {epoch}")
-			train_loop(dataloader_train, epoch)
-			test_loop(dataloader_test, epoch)
+		#	train_loop(dataloader_train, epoch)
+		#	test_loop(dataloader_test, epoch)
 
 
 if __name__ == "__main__":

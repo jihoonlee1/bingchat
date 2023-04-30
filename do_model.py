@@ -13,7 +13,7 @@ tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate)
 loss_fn = torch.nn.BCEWithLogitsLoss()
 batch_size = 4 
-epochs = 20 
+epochs = 20
 
 
 def train_test_root_ids(cur):
@@ -35,7 +35,7 @@ def prepare_data(cur, root_ids):
 		company_id, = cur.fetchone()
 		cur.execute("SELECT name FROM companies WHERE id = ?", (company_id, ))
 		company_name, = cur.fetchone()
-		cur.execute("SELECT id, name FROM companies WHERE id != ", (company_id, ))
+		cur.execute("SELECT id, name FROM companies WHERE id != ?", (company_id, ))
 		other_companies = cur.fetchall()
 		num_other_companies = len(other_companies)
 		other_company_id, other_company_name = other_companies[random.randint(0, num_other_companies-1)]
@@ -155,15 +155,6 @@ def main():
 		sent0_train, sent1_train, labels_train = prepare_data(cur, train_ids)
 		sent0_test, sent1_test, labels_test = prepare_data(cur, test_ids)
 		
-		count_yes = 0 
-		count_no = 0 
-		for item in sent0_train:
-			if item == [0, 1]:
-				count_no += 1
-			elif item == [1, 0]:
-				count_yes += 1
-		print(count_yes)
-		print(count_no)
 		encodings_train = tokenizer(sent0_train, sent1_train, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
 		encodings_train["labels"] = torch.tensor(labels_train, dtype=torch.float64)
 		dataset_train = EventDataset(encodings_train)
@@ -176,8 +167,8 @@ def main():
 
 		for epoch in range(1, epochs+1):
 			print(f"Epoch: {epoch}")
-		#	train_loop(dataloader_train, epoch)
-		#	test_loop(dataloader_test, epoch)
+			train_loop(dataloader_train, epoch)
+			test_loop(dataloader_test, epoch)
 
 
 if __name__ == "__main__":

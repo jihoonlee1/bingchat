@@ -92,6 +92,7 @@ def ask(client_msg, cookie_fname):
 
 
 if __name__ == "__main__":
-	response = ask("hello bing", "cookie.txt")
-	print(response)
-
+	root = '''[[Apple]] sued by [[Epic Games]] over [[App Store]] policies. [[Epic Games]], the maker of the popular video game [[Fortnite]], has filed a lawsuit against [[Apple]] for allegedly violating antitrust laws and engaging in anti-competitive practices. The lawsuit stems from a dispute over the 30% commission that [[Apple]] charges developers for in-app purchases made through its [[App Store]]. [[Epic Games]] claims that this fee is unfair and harms both developers and consumers. It also accuses [[Apple]] of abusing its dominant position in the mobile app market and preventing other payment options from being available. [[Epic Games]] is seeking injunctive relief and damages from [[Apple]], as well as the right to distribute its own app store on iOS devices. [[Apple]], on the other hand, argues that its [[App Store]] policies are necessary to ensure quality, security, and privacy for its users. It also says that [[Epic Games]] breached its contract by introducing its own payment system without its approval.'''
+	root = root.replace("[[", "").replace("]]", "")
+	question = f'''Write 3 news stories about Apple that are irrelevant to {root}. Surround all the proper nouns with two brackets in each story. Start each story with "Story: ".'''
+	print(ask(question, "cookie36.txt"))

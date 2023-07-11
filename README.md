@@ -14,7 +14,7 @@ import bingchat
 
 cookie_filename = "cookie.txt"
 session = bingchat.session(cookie_filename)
-response = bingchat.ask("Remember this sentence: I love coffee.", session, session_start=1)
+response = bingchat.ask("Remember this sentence: I love coffee.", session, session_start=True)
 response = bingchat.ask("What sentence did I just say?", session)
 ```
 4. That's it!

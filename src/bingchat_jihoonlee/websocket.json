@@ -52,7 +52,7 @@
 			],
 			"verbosity": "verbose",
 			"traceId": null,
-			"isStartOfSession": true,
+			"isStartOfSession": false,
 			"message": {
 				"locale": "en-CA",
 				"market": "en-CA",

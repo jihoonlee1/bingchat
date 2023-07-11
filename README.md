@@ -11,12 +11,14 @@ I reverse engineered Bing Chat to use it with Python script. ChatGPT API was too
 ```
 import bing
 
-question = "Hello, Bing!"
-response = bing.ask(question, "your_cookie_filename.txt")
+
+cookie_filename = "cookie.txt"
+conversation_id, client_id, conversation_signature = bing.session(cookie_filename)
+response = bing.ask(question, conversation_id, client_id, conversation_signature, session_start=1)
 print(response)
 ```
 4. That's it!
 
 ## Caveat
-- Bing Chat only allows 150 requests per 24 hours.
+- Bing Chat only allows 200 requests per 24 hours.
 - My implementation of this reverse engineering is not asyncio. If you want to make concurrent requests, you have to multithread it. That is what I did for few of my projects.

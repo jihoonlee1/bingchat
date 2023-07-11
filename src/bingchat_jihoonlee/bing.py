@@ -22,7 +22,7 @@ def _headers(cookie_fname):
 		return headers
 
 
-def _create_conversation(cookie_fname):
+def session(cookie_fname):
 	response = requests.get("https://www.bing.com/turing/conversation/create", headers=_headers(cookie_fname))
 	data = response.json()
 	return data["conversationId"], data["clientId"], data["conversationSignature"]
@@ -52,10 +52,11 @@ def _precise():
 	return ["h3precise", "clgalileo"]
 
 
-def _chathub_ws_msg(msg, cookie_fname, cdxtone=_creative()):
-	conv_id, client_id, conv_sig = _create_conversation(cookie_fname)
+def _chathub_ws_msg(msg, conv_id, client_id, conv_sig, session_start, cdxtone=_creative()):
 	with open("websocket.json", "r") as f:
 		obj = json.load(f)
+		if session_start == 1:
+			obj["arguments"][0]["isStartOfSession"] = True
 		obj["arguments"][0]["traceId"] = secrets.token_hex(16)
 		obj["arguments"][0]["conversationSignature"] = conv_sig
 		obj["arguments"][0]["conversationId"] = conv_id
@@ -72,11 +73,11 @@ def _clean_msg(msg):
 	return msg
 
 
-def ask(client_msg, cookie_fname):
+def ask(client_msg, conv_id, client_id, conv_sig, session_start=0):
 	with connect("wss://sydney.bing.com/sydney/ChatHub") as websocket:
 		websocket.send(_initial_handshake_msg())
 		websocket.recv()
-		websocket.send(_chathub_ws_msg(client_msg, cookie_fname))
+		websocket.send(_chathub_ws_msg(client_msg, conv_id, client_id, conv_sig, session_start))
 		while True:
 			data = json.loads(websocket.recv().split("\x1e")[0])
 			if data["type"] != 2:
@@ -90,9 +91,3 @@ def ask(client_msg, cookie_fname):
 					return _clean_msg(msg["text"])
 				break
 
-
-if __name__ == "__main__":
-	root = '''[[Apple]] sued by [[Epic Games]] over [[App Store]] policies. [[Epic Games]], the maker of the popular video game [[Fortnite]], has filed a lawsuit against [[Apple]] for allegedly violating antitrust laws and engaging in anti-competitive practices. The lawsuit stems from a dispute over the 30% commission that [[Apple]] charges developers for in-app purchases made through its [[App Store]]. [[Epic Games]] claims that this fee is unfair and harms both developers and consumers. It also accuses [[Apple]] of abusing its dominant position in the mobile app market and preventing other payment options from being available. [[Epic Games]] is seeking injunctive relief and damages from [[Apple]], as well as the right to distribute its own app store on iOS devices. [[Apple]], on the other hand, argues that its [[App Store]] policies are necessary to ensure quality, security, and privacy for its users. It also says that [[Epic Games]] breached its contract by introducing its own payment system without its approval.'''
-	root = root.replace("[[", "").replace("]]", "")
-	question = f'''Write 3 news stories about Apple that are irrelevant to {root}. Surround all the proper nouns with two brackets in each story. Start each story with "Story: ".'''
-	print(ask(question, "cookie36.txt"))

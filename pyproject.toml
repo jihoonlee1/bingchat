@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bingchat"
+name = "binghello"
 version = "0.0.1"
 authors = []
 description = ""

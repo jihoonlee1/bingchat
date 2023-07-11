@@ -1,4 +1,4 @@
-# Bingchat
+# Binghello
 
 
 ## Introduction
@@ -9,12 +9,12 @@ I reverse engineered Bing Chat to use it with Python script. ChatGPT API was too
 2. After you grab a cookie, create a new text file inside this directory with your cookie string.
 3. Pass in your cookie filename.
 ```
-import bing
+import binghello
 
 
 cookie_filename = "cookie.txt"
-conversation_id, client_id, conversation_signature = bing.session(cookie_filename)
-response = bing.ask(question, conversation_id, client_id, conversation_signature, session_start=1)
+conversation_id, client_id, conversation_signature = binghello.session(cookie_filename)
+response = binghello.ask(question, conversation_id, client_id, conversation_signature, session_start=1)
 print(response)
 ```
 4. That's it!

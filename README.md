@@ -1,4 +1,4 @@
-# Binghello
+# Bingchat
 
 
 ## Introduction
@@ -13,9 +13,9 @@ import binghello
 
 
 cookie_filename = "cookie.txt"
-conversation_id, client_id, conversation_signature = binghello.session(cookie_filename)
-response = binghello.ask(question, conversation_id, client_id, conversation_signature, session_start=1)
-print(response)
+session = bingchat.session(cookie_filename)
+response = bingchat.ask("Remember this sentence: I love coffee.", session, session_start=1)
+response = bingchat.ask("What sentence did I just say?")
 ```
 4. That's it!
 

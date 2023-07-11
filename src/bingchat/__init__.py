@@ -6,6 +6,11 @@ import re
 import requests
 import uuid
 import secrets
+import os
+
+
+def _fpath(fname):
+	return os.path.join(os.path.dirname(__file__), fname)
 
 
 def _cookie(cookie_fname):
@@ -14,7 +19,7 @@ def _cookie(cookie_fname):
 
 
 def _headers(cookie_fname):
-	with open("headers.json", "r") as f:
+	with open(_fpath("headers.json"), "r") as f:
 		headers = json.load(f)
 		headers["cookie"] = _cookie(cookie_fname)
 		headers["x-ms-client-request-id"] = str(uuid.uuid4())
@@ -53,9 +58,9 @@ def _precise():
 
 
 def _chathub_ws_msg(msg, conv_id, client_id, conv_sig, session_start, cdxtone=_creative()):
-	with open("websocket.json", "r") as f:
+	with open(_fpath("websocket.json"), "r") as f:
 		obj = json.load(f)
-		if session_start == 1:
+		if session_start:
 			obj["arguments"][0]["isStartOfSession"] = True
 		obj["arguments"][0]["traceId"] = secrets.token_hex(16)
 		obj["arguments"][0]["conversationSignature"] = conv_sig
@@ -73,7 +78,8 @@ def _clean_msg(msg):
 	return msg
 
 
-def ask(client_msg, conv_id, client_id, conv_sig, session_start=0):
+def ask(client_msg, session, session_start=False):
+	conv_id, client_id, conv_sig = session
 	with connect("wss://sydney.bing.com/sydney/ChatHub") as websocket:
 		websocket.send(_initial_handshake_msg())
 		websocket.recv()

@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "binghello"
-version = "0.0.1"
-authors = []
+name = "bingchat"
+version = "0.0.9"
+4uthors = []
 description = ""
 readme = "README.md"
 requires-python = ">=3.7"

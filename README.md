@@ -9,7 +9,7 @@ I reverse engineered Bing Chat to use it with Python script. ChatGPT API was too
 2. After you grab a cookie, create a new text file inside this directory with your cookie string.
 3. Pass in your cookie filename.
 ```
-import binghello
+import bingchat
 
 
 cookie_filename = "cookie.txt"

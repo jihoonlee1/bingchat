@@ -12,7 +12,7 @@ I reverse engineered Bing Chat to use it with Python script. ChatGPT API was too
 import bingchat
 
 
-cookie_filename = "cookie.txt"
+cookie_filename = "cookie.json"
 session = bingchat.session(cookie_filename)
 response = bingchat.ask("Remember this sentence: I love coffee.", session, session_start=True)
 response = bingchat.ask("What sentence did I just say?", session)

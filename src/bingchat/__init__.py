@@ -13,9 +13,22 @@ def _fpath(fname):
 	return os.path.join(os.path.dirname(__file__), fname)
 
 
+def _cookie_to_str(cookie_fname):
+	with open(cookie_fname) as f:
+		data = json.load(f)
+		cookie = []
+		for item in data:
+			name = item["name"].strip()
+			value = item["value"].strip()
+			line = name + "=" + value
+			cookie.append(line)
+		cookie = "; ".join(cookie)
+		return cookie
+
+
 def _cookie(cookie_fname):
-	with open(cookie_fname, "r") as f:
-		return f.read().strip()
+	cookie = _cookie_to_str(cookie_fname)
+	return cookie
 
 
 def _headers(cookie_fname):
